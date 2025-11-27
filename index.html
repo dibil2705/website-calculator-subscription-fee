@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Калькулятор абонплаты</title>
+  <style>
+    :root{
+      --bg: #0b0f17;
+      --card: rgba(255,255,255,.06);
+      --stroke: rgba(255,255,255,.10);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.60);
+      --accent: #6ee7ff;
+      --danger: #ff6b6b;
+      --shadow: 0 24px 80px rgba(0,0,0,.55);
+      --radius: 22px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100dvh;
+      display:grid;
+      place-items:center;
+      background:
+        radial-gradient(1200px 700px at 20% 15%, rgba(110,231,255,.18), transparent 60%),
+        radial-gradient(900px 600px at 80% 60%, rgba(153,102,255,.16), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      padding: 24px;
+    }
+    .wrap{
+      width:min(520px, 100%);
+      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    header{
+      padding: 18px 18px 12px;
+      border-bottom:1px solid var(--stroke);
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      justify-content:space-between;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    h1{
+      margin:0;
+      font-size: 16px;
+      letter-spacing:.2px;
+      font-weight: 700;
+    }
+    .formula{
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .badge{
+      font-size: 12px;
+      color: rgba(255,255,255,.85);
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.18);
+      padding: 8px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+      user-select:none;
+    }
+    .screen{
+      padding: 16px 18px 18px;
+      display:grid;
+      gap: 10px;
+    }
+    .display{
+      border:1px solid var(--stroke);
+      border-radius: 18px;
+      background: rgba(0,0,0,.22);
+      padding: 14px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 14px;
+      min-height: 64px;
+    }
+    .left{
+      display:flex;
+      flex-direction:column;
+      gap: 4px;
+    }
+    .label{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .nvalue{
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: .4px;
+      line-height: 1.05;
+    }
+    .right{
+      text-align:right;
+    }
+    .total{
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .sum{
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+    .hint{
+      font-size: 12px;
+      color: var(--muted);
+      padding: 0 2px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 6px;
+    }
+    button{
+      appearance:none;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 14px 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+    }
+    button:active{ transform: translateY(1px); }
+    button:hover{ background: rgba(255,255,255,.09); }
+    .op{
+      background: rgba(110,231,255,.10);
+      border-color: rgba(110,231,255,.35);
+    }
+    .op:hover{ background: rgba(110,231,255,.14); }
+    .danger{
+      background: rgba(255,107,107,.10);
+      border-color: rgba(255,107,107,.35);
+    }
+    .danger:hover{ background: rgba(255,107,107,.14); }
+    .wide{ grid-column: span 2; }
+    .footer{
+      padding: 14px 18px 18px;
+      border-top: 1px solid var(--stroke);
+      color: var(--muted);
+      font-size: 12px;
+      display:flex;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap:wrap;
+    }
+    code{
+      background: rgba(0,0,0,.28);
+      border: 1px solid var(--stroke);
+      padding: 2px 6px;
+      border-radius: 8px;
+      color: rgba(255,255,255,.86);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>Калькулятор абонентской платы</h1>
+        <div class="formula">Считает: <code>1200 + 500 + n*20*3*31</code></div>
+      </div>
+      <div class="badge">Вводишь <b>n</b> → жмёшь <b>=</b></div>
+    </header>
+
+    <div class="screen">
+      <div class="display" aria-live="polite">
+        <div class="left">
+          <div class="label">n</div>
+          <div class="nvalue" id="nDisplay">0</div>
+        </div>
+        <div class="right">
+          <div class="total">Итог</div>
+          <div class="sum" id="sumDisplay">—</div>
+        </div>
+      </div>
+
+      <div class="hint">Можно вводить с клавиатуры (цифры), <code>Backspace</code> — удалить, <code>Enter</code> — равно.</div>
+
+      <div class="grid" id="keys">
+        <button type="button" data-action="clear" class="danger wide">C</button>
+        <button type="button" data-action="back" class="danger">⌫</button>
+        <button type="button" data-action="equals" class="op">=</button>
+
+        <button type="button" data-digit="7">7</button>
+        <button type="button" data-digit="8">8</button>
+        <button type="button" data-digit="9">9</button>
+        <button type="button" data-action="noop" disabled style="opacity:.5; cursor:not-allowed;"> </button>
+
+        <button type="button" data-digit="4">4</button>
+        <button type="button" data-digit="5">5</button>
+        <button type="button" data-digit="6">6</button>
+        <button type="button" data-action="noop" disabled style="opacity:.5; cursor:not-allowed;"> </button>
+
+        <button type="button" data-digit="1">1</button>
+        <button type="button" data-digit="2">2</button>
+        <button type="button" data-digit="3">3</button>
+        <button type="button" data-action="noop" disabled style="opacity:.5; cursor:not-allowed;"> </button>
+
+        <button type="button" data-digit="0" class="wide">0</button>
+        <button type="button" data-action="equals" class="op wide">Посчитать =</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>Постоянная часть: <code>1200 + 500</code></div>
+      <div>Переменная часть: <code>n*20*3*31</code></div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const nDisplay = document.getElementById('nDisplay');
+      const sumDisplay = document.getElementById('sumDisplay');
+      const keys = document.getElementById('keys');
+
+      // Храним n как строку, чтобы удобно добавлять/удалять цифры
+      let nStr = "0";
+
+      const BASE = 1200 + 500;
+      const MULT = 20 * 3 * 31; // 1860
+
+      function normalizeN() {
+        // убираем ведущие нули, но оставляем "0"
+        nStr = nStr.replace(/^0+(?=\d)/, "");
+        if (nStr === "") nStr = "0";
+      }
+
+      function setN(newStr) {
+        nStr = String(newStr).replace(/[^\d]/g, "");
+        if (nStr === "") nStr = "0";
+        normalizeN();
+        nDisplay.textContent = nStr;
+      }
+
+      function appendDigit(d) {
+        if (nStr === "0") nStr = d;
+        else nStr += d;
+        normalizeN();
+        nDisplay.textContent = nStr;
+      }
+
+      function backspace() {
+        if (nStr.length <= 1) nStr = "0";
+        else nStr = nStr.slice(0, -1);
+        normalizeN();
+        nDisplay.textContent = nStr;
+      }
+
+      function clearAll() {
+        nStr = "0";
+        nDisplay.textContent = nStr;
+        sumDisplay.textContent = "—";
+      }
+
+      function formatRub(num) {
+        // Просто красивое разделение разрядов (без валюты, если не надо)
+        return new Intl.NumberFormat("ru-RU").format(num);
+      }
+
+      function compute() {
+        const n = Number.parseInt(nStr, 10) || 0;
+        const total = BASE + n * MULT;
+        sumDisplay.textContent = formatRub(total);
+      }
+
+      keys.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn || btn.disabled) return;
+
+        const digit = btn.getAttribute('data-digit');
+        const action = btn.getAttribute('data-action');
+
+        if (digit !== null) appendDigit(digit);
+        else if (action === "back") backspace();
+        else if (action === "clear") clearAll();
+        else if (action === "equals") compute();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key >= '0' && e.key <= '9') {
+          appendDigit(e.key);
+          return;
+        }
+        if (e.key === 'Backspace') {
+          e.preventDefault();
+          backspace();
+          return;
+        }
+        if (e.key === 'Escape') {
+          clearAll();
+          return;
+        }
+        if (e.key === 'Enter' || e.key === '=') {
+          compute();
+          return;
+        }
+      });
+
+      // стартовое состояние
+      setN("0");
+    })();
+  </script>
+</body>
+</html>
