@@ -69,6 +69,25 @@
       flex-wrap:wrap;
     }
 
+    .row.align-start{
+      align-items:flex-start;
+    }
+
+    .toggleGroup{
+      display:flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .toggleGroup .btn{
+      flex: 1;
+    }
+
+    .btn.active{
+      border-color: var(--accentStroke);
+      background: linear-gradient(180deg, rgba(110,231,255,.18), rgba(110,231,255,.08));
+    }
+
     .pill{
       flex: 1;
       border: 1px solid var(--stroke2);
@@ -95,6 +114,10 @@
       justify-content:flex-end;
     }
 
+    .rateBox .btn{
+      min-width: 56px;
+    }
+
     input{
       width: 110px;
       border: 1px solid var(--stroke2);
@@ -106,6 +129,11 @@
       font-weight: 800;
       outline: none;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    input[readonly]{
+      opacity: 0.65;
+      cursor: not-allowed;
     }
 
     .btn{
@@ -172,6 +200,91 @@
     .stack{ display:flex; flex-direction:column; gap: 4px; }
     .right{ text-align:right; }
 
+    details{
+      width: 100%;
+      border: 1px solid var(--stroke2);
+      border-radius: 16px;
+      padding: 10px 12px;
+      background: rgba(0,0,0,.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    details summary{
+      cursor: pointer;
+      list-style: none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    details summary::-webkit-details-marker{ display:none; }
+
+    .detailsGrid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .detailsGrid .stack{
+      gap: 6px;
+    }
+
+    .detailsGrid input{
+      width: 100%;
+    }
+
+    .detailsButton{
+      width: 100%;
+      padding: 0;
+      border: none;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .detailsButton summary{
+      padding: 12px 10px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke2);
+      background: linear-gradient(180deg, var(--btn), var(--btn2));
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 850;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        inset 0 -1px 0 rgba(0,0,0,.35);
+    }
+
+    .detailsButton[open] summary{
+      border-color: var(--accentStroke);
+      background: linear-gradient(180deg, rgba(110,231,255,.16), rgba(110,231,255,.06));
+    }
+
+    .settingsList{
+      display:grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .settingsList label{
+      display:flex;
+      gap: 10px;
+      align-items:flex-start;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .pillColumn{
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+      width: 100%;
+    }
+
     @media (max-width: 420px){
       input{ width: 96px; }
       .big{ font-size: 20px; }
@@ -182,15 +295,68 @@
   <div class="app">
     <div class="top">
       <div class="row">
+        <div class="toggleGroup" role="tablist" aria-label="Режим калькулятора">
+          <button class="btn active" id="modeHospitality" type="button" data-mode="hospitality">Рестораны/отели</button>
+          <button class="btn" id="modeOutbound" type="button" data-mode="outbound">Исходящие звонки</button>
+        </div>
+      </div>
+      <div class="row">
         <div class="pill">
-          <div class="stack">
-            <div class="label">₽/мин</div>
-            <div class="big" id="rateDisplay">20</div>
-          </div>
+          <div class="pillColumn">
+            <div class="row">
+              <div class="stack">
+                <div class="label">₽/мин</div>
+                <div class="big" id="rateDisplay">20</div>
+              </div>
 
-          <div class="rateBox">
-            <input id="rateInput" type="number" inputmode="numeric" min="0" step="1" value="20" aria-label="Цена за минуту">
-            <button class="btn accent" id="rateSet" type="button" aria-label="Применить цену">OK</button>
+              <div class="rateBox">
+                <input id="rateInput" type="number" inputmode="decimal" min="0" step="0.01" value="20" aria-label="Цена за минуту">
+                <button class="btn accent" id="rateSet" type="button" aria-label="Применить цену">OK</button>
+              </div>
+            </div>
+
+            <div class="row align-start" id="outboundControls" hidden>
+              <details id="rateDetails">
+                <summary>
+                  <span>Детализация ₽/мин</span>
+                  <span aria-hidden="true">⌄</span>
+                </summary>
+                <div class="detailsGrid">
+                  <label class="stack">
+                    <span class="label">Синтез речи</span>
+                    <input id="speechInput" type="number" inputmode="decimal" min="0" step="0.01" value="2.63">
+                  </label>
+                  <label class="stack">
+                    <span class="label">Голосовой бот</span>
+                    <input id="voiceInput" type="number" inputmode="decimal" min="0" step="0.01" value="4.5">
+                  </label>
+                  <label class="stack">
+                    <span class="label">Токены</span>
+                    <input id="tokenInput" type="number" inputmode="decimal" min="0" step="0.01" value="0.8">
+                  </label>
+                </div>
+              </details>
+
+              <div class="toggleGroup">
+                <button class="btn" id="costButton" type="button">Себестоимость</button>
+                <details id="settingsDetails" class="detailsButton">
+                  <summary>
+                    <span>Настройки</span>
+                    <span aria-hidden="true">⚙️</span>
+                  </summary>
+                  <div class="settingsList" role="radiogroup" aria-label="Тарифы">
+                    <label><input type="radio" name="tariff" value="4.5" checked> Пакет на 1500 минут/1 месяц: 4.5 руб./мин (6750 руб.). Посекундный бот</label>
+                    <label><input type="radio" name="tariff" value="4.1"> Пакет на 3000 минут/1 месяц: 4.1 руб./мин (12300 руб.). Посекундный бот</label>
+                    <label><input type="radio" name="tariff" value="3.8"> Пакет на 5000 минут/1 месяц: 3.8 руб./мин (19000 руб.). Посекундный бот</label>
+                    <label><input type="radio" name="tariff" value="3.5"> Пакет на 7000 минут/1 месяц: 3.5 руб./мин (24500 руб.). Посекундный бот</label>
+                    <label><input type="radio" name="tariff" value="3.4"> Пакет на 10000 минут/1 месяц: 3.4 руб./мин (34000 руб.). Посекундный бот</label>
+                    <label><input type="radio" name="tariff" value="3.3"> Пакет на 20000 минут/2 месяца: 3.3 руб./мин (66000 руб.). Посекундные звонки и бот</label>
+                    <label><input type="radio" name="tariff" value="3.2"> Пакет на 35000 минут/2 месяца: 3.2 руб./мин (112000 руб.). Посекундные звонки и бот</label>
+                    <label><input type="radio" name="tariff" value="3.0"> Пакет на 50000 минут/2 месяца: 3 руб./мин (150000 руб.). Посекундные звонки и бот</label>
+                  </div>
+                </details>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -247,22 +413,60 @@
       const sumDisplay = document.getElementById('sumDisplay');
       const keys = document.getElementById('keys');
 
+      const modeHospitality = document.getElementById('modeHospitality');
+      const modeOutbound = document.getElementById('modeOutbound');
+
       const rateDisplay = document.getElementById('rateDisplay');
       const rateInput = document.getElementById('rateInput');
       const rateSet = document.getElementById('rateSet');
+
+      const outboundControls = document.getElementById('outboundControls');
+      const rateDetails = document.getElementById('rateDetails');
+      const speechInput = document.getElementById('speechInput');
+      const voiceInput = document.getElementById('voiceInput');
+      const tokenInput = document.getElementById('tokenInput');
+      const costButton = document.getElementById('costButton');
+      const settingsDetails = document.getElementById('settingsDetails');
+      const tariffInputs = Array.from(document.querySelectorAll('input[name="tariff"]'));
 
       const formulaEl = document.getElementById('formula');
 
       let nStr = "0";
       let rate = 20;
+      let mode = "hospitality";
 
       const BASE = 1200 + 500;
+      const BASE_OUTBOUND = 1200 * 0.6 + 500;
       const MULT_FIXED = 3 * 31;
 
       const fmt = (x) => new Intl.NumberFormat("ru-RU").format(x);
+      const fmtRate = (x) => new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(x);
+
+      const parseNumber = (value, fallback = 0) => {
+        const v = Number.parseFloat(value);
+        return Number.isFinite(v) ? v : fallback;
+      };
+
+      const getDetailedRate = () => {
+        const speech = parseNumber(speechInput.value, 0);
+        const voice = parseNumber(voiceInput.value, 0);
+        const tokens = parseNumber(tokenInput.value, 0);
+        return speech + voice * 0.8 + tokens;
+      };
+
+      const renderRate = (value) => {
+        rateDisplay.textContent = fmtRate(value);
+        rateInput.value = String(value);
+      };
 
       const renderFormula = () => {
-        formulaEl.textContent = `1200 + 500 + n × ${rate} × 3 × 31`;
+        if (mode === "outbound") {
+          const usedRate = rateDetails.open ? getDetailedRate() : rate;
+          const rateLabel = fmtRate(usedRate);
+          formulaEl.textContent = `1200 - 40% + 500 + n × ${rateLabel} × 3 × 31`;
+        } else {
+          formulaEl.textContent = `1200 + 500 + n × ${fmtRate(rate)} × 3 × 31`;
+        }
         formulaEl.title = formulaEl.textContent;
       };
 
@@ -286,15 +490,18 @@
       }
       function compute(){
         const n = Number.parseInt(nStr, 10) || 0;
-        const total = BASE + n * rate * MULT_FIXED;
+        const usedRate = mode === "outbound"
+          ? (rateDetails.open ? getDetailedRate() : rate)
+          : rate;
+        const base = mode === "outbound" ? BASE_OUTBOUND : BASE;
+        const total = base + n * usedRate * MULT_FIXED;
         sumDisplay.textContent = fmt(total);
       }
 
       function setRateFromInput(){
-        const v = Number.parseInt(rateInput.value, 10);
-        rate = Number.isFinite(v) && v >= 0 ? v : 20;
-        rateInput.value = String(rate);
-        rateDisplay.textContent = String(rate);
+        const v = parseNumber(rateInput.value, 20);
+        rate = v >= 0 ? v : 20;
+        renderRate(rate);
         renderFormula();
       }
 
@@ -322,9 +529,70 @@
         if (e.key === 'Enter' || e.key === '=') return compute();
       });
 
+      const setMode = (nextMode) => {
+        mode = nextMode;
+        const outbound = mode === "outbound";
+        outboundControls.hidden = !outbound;
+        modeHospitality.classList.toggle('active', !outbound);
+        modeOutbound.classList.toggle('active', outbound);
+        rateInput.step = outbound ? "0.01" : "1";
+        rateInput.readOnly = outbound && rateDetails.open;
+        rateSet.disabled = outbound && rateDetails.open;
+        renderRate(rate);
+        renderFormula();
+        sumDisplay.textContent = "—";
+      };
+
+      const syncDetailedRate = () => {
+        const detailedRate = getDetailedRate();
+        rate = detailedRate;
+        renderRate(detailedRate);
+        renderFormula();
+      };
+
+      rateDetails.addEventListener('toggle', () => {
+        const isOpen = rateDetails.open;
+        rateInput.readOnly = isOpen;
+        rateSet.disabled = isOpen;
+        if (isOpen) {
+          syncDetailedRate();
+        } else {
+          renderRate(rate);
+          renderFormula();
+        }
+      });
+
+      [speechInput, voiceInput, tokenInput].forEach((input) => {
+        input.addEventListener('input', () => {
+          if (mode === "outbound" && rateDetails.open) {
+            syncDetailedRate();
+          }
+        });
+      });
+
+      costButton.addEventListener('click', () => {
+        speechInput.value = "2.63";
+        tokenInput.value = "0.8";
+        const selectedTariff = tariffInputs.find((input) => input.checked);
+        voiceInput.value = selectedTariff ? selectedTariff.value : "4.5";
+        if (!rateDetails.open) rateDetails.open = true;
+        syncDetailedRate();
+      });
+
+      tariffInputs.forEach((input) => {
+        input.addEventListener('change', () => {
+          voiceInput.value = input.value;
+          if (mode === "outbound" && rateDetails.open) {
+            syncDetailedRate();
+          }
+        });
+      });
+
+      modeHospitality.addEventListener('click', () => setMode("hospitality"));
+      modeOutbound.addEventListener('click', () => setMode("outbound"));
+
       // init
-      rateDisplay.textContent = String(rate);
-      rateInput.value = String(rate);
+      renderRate(rate);
       renderFormula();
       renderN();
     })();
