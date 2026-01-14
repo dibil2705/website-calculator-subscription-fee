@@ -196,6 +196,7 @@
       justify-content:space-between;
       gap: 14px;
       width: 100%;
+      flex-wrap: wrap;
     }
     .stack{ display:flex; flex-direction:column; gap: 4px; }
     .right{ text-align:right; }
@@ -276,6 +277,7 @@
       align-items:flex-start;
       font-size: 13px;
       color: var(--text);
+      line-height: 1.35;
     }
 
     .pillColumn{
@@ -285,8 +287,41 @@
       width: 100%;
     }
 
-    @media (max-width: 420px){
-      input{ width: 96px; }
+    @media (max-width: 520px){
+      body{ padding: 14px; }
+      .top{ padding: 14px; }
+      .row{
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .toggleGroup{
+        flex-direction: column;
+      }
+      .rateBox{
+        width: 100%;
+        justify-content: space-between;
+      }
+      .rateBox input{
+        flex: 1;
+        width: auto;
+      }
+      .formulaWrap{
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .code{
+        width: 100%;
+      }
+      .detailsGrid{
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .grid{
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        padding: 14px;
+      }
+      .wide{ grid-column: span 3; }
+      input{ width: 100%; }
       .big{ font-size: 20px; }
     }
   </style>
@@ -345,14 +380,14 @@
                     <span aria-hidden="true">⚙️</span>
                   </summary>
                   <div class="settingsList" role="radiogroup" aria-label="Тарифы">
-                    <label><input type="radio" name="tariff" value="4.5" checked> Пакет на 1500 минут/1 месяц: 4.5 руб./мин (6750 руб.). Посекундный бот</label>
-                    <label><input type="radio" name="tariff" value="4.1"> Пакет на 3000 минут/1 месяц: 4.1 руб./мин (12300 руб.). Посекундный бот</label>
-                    <label><input type="radio" name="tariff" value="3.8"> Пакет на 5000 минут/1 месяц: 3.8 руб./мин (19000 руб.). Посекундный бот</label>
-                    <label><input type="radio" name="tariff" value="3.5"> Пакет на 7000 минут/1 месяц: 3.5 руб./мин (24500 руб.). Посекундный бот</label>
-                    <label><input type="radio" name="tariff" value="3.4"> Пакет на 10000 минут/1 месяц: 3.4 руб./мин (34000 руб.). Посекундный бот</label>
-                    <label><input type="radio" name="tariff" value="3.3"> Пакет на 20000 минут/2 месяца: 3.3 руб./мин (66000 руб.). Посекундные звонки и бот</label>
-                    <label><input type="radio" name="tariff" value="3.2"> Пакет на 35000 минут/2 месяца: 3.2 руб./мин (112000 руб.). Посекундные звонки и бот</label>
-                    <label><input type="radio" name="tariff" value="3.0"> Пакет на 50000 минут/2 месяца: 3 руб./мин (150000 руб.). Посекундные звонки и бот</label>
+                    <label><input type="radio" name="tariff" value="4.5" checked> 1500 мин/30 дней — 6 750 ₽ · 4,5 ₽/мин</label>
+                    <label><input type="radio" name="tariff" value="4.1"> 3000 мин/30 дней — 12 300 ₽ · 4,1 ₽/мин</label>
+                    <label><input type="radio" name="tariff" value="3.8"> 5000 мин/30 дней — 19 000 ₽ · 3,8 ₽/мин</label>
+                    <label><input type="radio" name="tariff" value="3.5"> 7000 мин/30 дней — 24 500 ₽ · 3,5 ₽/мин</label>
+                    <label><input type="radio" name="tariff" value="3.4"> 10 000 мин/30 дней — 34 000 ₽ · 3,4 ₽/мин</label>
+                    <label><input type="radio" name="tariff" value="3.3"> 20 000 мин/60 дней — 66 000 ₽ · 3,3 ₽/мин</label>
+                    <label><input type="radio" name="tariff" value="3.2"> 35 000 мин/60 дней — 112 000 ₽ · 3,2 ₽/мин</label>
+                    <label><input type="radio" name="tariff" value="3.0"> 50 000 мин/60 дней — 150 000 ₽ · 3 ₽/мин</label>
                   </div>
                 </details>
               </div>
@@ -370,12 +405,16 @@
         <div class="pill">
           <div class="screenNums">
             <div class="stack">
-              <div class="label">n</div>
+              <div class="label" id="nLabel">n — звонки</div>
               <div class="big" id="nDisplay">0</div>
             </div>
             <div class="stack right">
               <div class="label">итог</div>
               <div class="big" id="sumDisplay">—</div>
+            </div>
+            <div class="stack right">
+              <div class="label">прибыль</div>
+              <div class="big" id="profitDisplay">—</div>
             </div>
           </div>
         </div>
@@ -410,7 +449,9 @@
   <script>
     (() => {
       const nDisplay = document.getElementById('nDisplay');
+      const nLabel = document.getElementById('nLabel');
       const sumDisplay = document.getElementById('sumDisplay');
+      const profitDisplay = document.getElementById('profitDisplay');
       const keys = document.getElementById('keys');
 
       const modeHospitality = document.getElementById('modeHospitality');
@@ -433,10 +474,12 @@
 
       let nStr = "0";
       let rate = 20;
+      let lastManualRate = rate;
       let mode = "hospitality";
+      let costEnabled = false;
 
       const BASE = 1200 + 500;
-      const BASE_OUTBOUND = 1200 * 0.6 + 500;
+      const BASE_OUTBOUND_COST = 1200 * 0.6 + 500 * 0.8;
       const MULT_FIXED = 3 * 31;
 
       const fmt = (x) => new Intl.NumberFormat("ru-RU").format(x);
@@ -461,9 +504,20 @@
 
       const renderFormula = () => {
         if (mode === "outbound") {
-          const usedRate = rateDetails.open ? getDetailedRate() : rate;
+          const rateIsDetailed = costEnabled && rateDetails.open;
+          const usedRate = rateIsDetailed ? getDetailedRate() : rate;
           const rateLabel = fmtRate(usedRate);
-          formulaEl.textContent = `1200 - 40% + 500 + n × ${rateLabel} × 3 × 31`;
+          if (costEnabled) {
+            const speech = fmtRate(parseNumber(speechInput.value, 0));
+            const voice = fmtRate(parseNumber(voiceInput.value, 0));
+            const tokens = fmtRate(parseNumber(tokenInput.value, 0));
+            const breakdown = rateIsDetailed
+              ? `(${speech} + ${voice} × 0,8 + ${tokens} = ${rateLabel})`
+              : rateLabel;
+            formulaEl.textContent = `1200 - 40% + 500 - 20% + n × ${breakdown} × 3`;
+          } else {
+            formulaEl.textContent = `1200 + 500 + n × ${rateLabel} × 3`;
+          }
         } else {
           formulaEl.textContent = `1200 + 500 + n × ${fmtRate(rate)} × 3 × 31`;
         }
@@ -487,20 +541,30 @@
       function clearAll(){
         nStr = "0"; renderN();
         sumDisplay.textContent = "—";
+        profitDisplay.textContent = "—";
       }
       function compute(){
         const n = Number.parseInt(nStr, 10) || 0;
         const usedRate = mode === "outbound"
-          ? (rateDetails.open ? getDetailedRate() : rate)
+          ? (costEnabled && rateDetails.open ? getDetailedRate() : rate)
           : rate;
-        const base = mode === "outbound" ? BASE_OUTBOUND : BASE;
+        const base = mode === "outbound"
+          ? (costEnabled ? BASE_OUTBOUND_COST : BASE)
+          : BASE;
         const total = base + n * usedRate * MULT_FIXED;
         sumDisplay.textContent = fmt(total);
+        if (mode === "outbound") {
+          const cost = BASE_OUTBOUND_COST + n * getDetailedRate() * MULT_FIXED;
+          profitDisplay.textContent = fmt(total - cost);
+        } else {
+          profitDisplay.textContent = "—";
+        }
       }
 
       function setRateFromInput(){
         const v = parseNumber(rateInput.value, 20);
         rate = v >= 0 ? v : 20;
+        lastManualRate = rate;
         renderRate(rate);
         renderFormula();
       }
@@ -533,14 +597,17 @@
         mode = nextMode;
         const outbound = mode === "outbound";
         outboundControls.hidden = !outbound;
+        settingsDetails.hidden = !outbound;
         modeHospitality.classList.toggle('active', !outbound);
         modeOutbound.classList.toggle('active', outbound);
         rateInput.step = outbound ? "0.01" : "1";
-        rateInput.readOnly = outbound && rateDetails.open;
-        rateSet.disabled = outbound && rateDetails.open;
+        rateInput.readOnly = outbound && costEnabled && rateDetails.open;
+        rateSet.disabled = outbound && costEnabled && rateDetails.open;
+        nLabel.textContent = outbound ? "n — всего звонков" : "n — звонков в день";
         renderRate(rate);
         renderFormula();
         sumDisplay.textContent = "—";
+        profitDisplay.textContent = "—";
       };
 
       const syncDetailedRate = () => {
@@ -550,16 +617,27 @@
         renderFormula();
       };
 
-      rateDetails.addEventListener('toggle', () => {
-        const isOpen = rateDetails.open;
-        rateInput.readOnly = isOpen;
-        rateSet.disabled = isOpen;
-        if (isOpen) {
+      const setCostState = (nextState) => {
+        costEnabled = nextState;
+        costButton.classList.toggle('active', costEnabled);
+        rateDetails.open = costEnabled;
+        rateInput.readOnly = costEnabled;
+        rateSet.disabled = costEnabled;
+        if (costEnabled) {
+          lastManualRate = rate;
           syncDetailedRate();
         } else {
+          rate = lastManualRate;
           renderRate(rate);
           renderFormula();
         }
+        sumDisplay.textContent = "—";
+      };
+
+      rateDetails.addEventListener('toggle', () => {
+        if (mode !== "outbound") return;
+        if (rateDetails.open === costEnabled) return;
+        setCostState(rateDetails.open);
       });
 
       [speechInput, voiceInput, tokenInput].forEach((input) => {
@@ -571,12 +649,15 @@
       });
 
       costButton.addEventListener('click', () => {
-        speechInput.value = "2.63";
-        tokenInput.value = "0.8";
-        const selectedTariff = tariffInputs.find((input) => input.checked);
-        voiceInput.value = selectedTariff ? selectedTariff.value : "4.5";
-        if (!rateDetails.open) rateDetails.open = true;
-        syncDetailedRate();
+        if (mode !== "outbound") return;
+        const nextState = !costEnabled;
+        if (nextState) {
+          speechInput.value = "2.63";
+          tokenInput.value = "0.8";
+          const selectedTariff = tariffInputs.find((input) => input.checked);
+          voiceInput.value = selectedTariff ? selectedTariff.value : "4.5";
+        }
+        setCostState(nextState);
       });
 
       tariffInputs.forEach((input) => {
@@ -595,6 +676,7 @@
       renderRate(rate);
       renderFormula();
       renderN();
+      nLabel.textContent = "n — звонков в день";
     })();
   </script>
 </body>
